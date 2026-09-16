@@ -27,7 +27,7 @@ services:
     <<: *vibe-edge
 
   caddy:
-    image: ${CADDY_IMAGE:-caddy:2.10-alpine}
+    image: caddy:2.10-alpine
     env_file: ${XBAR_VIBE_ENV_FILE:-.env}
     ports:
       - "80:80"
@@ -48,4 +48,3 @@ services:
 volumes:
   caddy-data:
   caddy-config:
-

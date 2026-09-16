@@ -46,7 +46,7 @@ validate() {
     echo "环境文件仍有占位值，请先完成配置：$ENV_FILE" >&2
     exit 1
   fi
-  for key in VIBE_DOMAIN ACME_EMAIL VIBE_CONTROL_URL VIBE_UPSTREAM_URL VIBE_EDGE_SHARED_SECRET VIBE_EDGE_ORIGIN_TOKEN; do
+  for key in XBAR_VIBE_IMAGE VIBE_DOMAIN ACME_EMAIL VIBE_CONTROL_URL VIBE_UPSTREAM_URL VIBE_EDGE_SHARED_SECRET VIBE_EDGE_ORIGIN_TOKEN; do
     [ -n "$(read_value "$key")" ] || {
       echo "缺少必填配置：$key" >&2
       exit 1
@@ -131,4 +131,3 @@ case "$action" in
     exit 64
     ;;
 esac
-
