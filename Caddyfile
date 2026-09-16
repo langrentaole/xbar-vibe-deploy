@@ -1,0 +1,32 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$VIBE_DOMAIN} {
+	log {
+		output stdout
+		format json
+	}
+
+	@vibe path /codex /codex/* /claudecode /claudecode/*
+	handle @vibe {
+		reverse_proxy edge-a:8090 edge-b:8090 {
+			lb_policy least_conn
+			lb_try_duration 5s
+			lb_try_interval 100ms
+			health_uri /healthz
+			health_interval 5s
+			health_timeout 3s
+			health_fails 1
+			fail_duration 30s
+			max_fails 2
+			header_up X-Xbar-Vibe-Origin {$VIBE_EDGE_ORIGIN_TOKEN}
+			flush_interval -1
+		}
+	}
+
+	handle {
+		respond "Not Found" 404
+	}
+}
+

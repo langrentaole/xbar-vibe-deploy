@@ -1,0 +1,51 @@
+x-vibe-edge: &vibe-edge
+  image: ${XBAR_VIBE_IMAGE:?必须配置 XBAR_VIBE_IMAGE}
+  env_file: ${XBAR_VIBE_ENV_FILE:-.env}
+  read_only: true
+  tmpfs:
+    - /tmp:size=1g,mode=1700,uid=100,gid=101
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  restart: unless-stopped
+  stop_grace_period: 31m
+  healthcheck:
+    test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8090/healthz"]
+    interval: 5s
+    timeout: 3s
+    retries: 30
+    start_period: 5s
+
+name: xbar-vibe
+
+services:
+  edge-a:
+    <<: *vibe-edge
+
+  edge-b:
+    <<: *vibe-edge
+
+  caddy:
+    image: ${CADDY_IMAGE:-caddy:2.10-alpine}
+    env_file: ${XBAR_VIBE_ENV_FILE:-.env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      edge-a:
+        condition: service_healthy
+      edge-b:
+        condition: service_healthy
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+volumes:
+  caddy-data:
+  caddy-config:
+
