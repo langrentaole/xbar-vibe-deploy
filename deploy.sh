@@ -46,7 +46,7 @@ validate() {
     echo "环境文件仍有占位值，请先完成配置：$ENV_FILE" >&2
     exit 1
   fi
-  for key in XBAR_VIBE_IMAGE VIBE_DOMAIN ACME_EMAIL VIBE_CONTROL_URL VIBE_UPSTREAM_URL VIBE_EDGE_SHARED_SECRET VIBE_EDGE_ORIGIN_TOKEN; do
+  for key in XBAR_VIBE_IMAGE VIBE_DOMAIN ACME_EMAIL VIBE_CONTROL_URL VIBE_CONTROL_HOST VIBE_CONTROL_ORIGIN_IP VIBE_UPSTREAM_URL VIBE_STATION_ID VIBE_PUBLIC_IP VIBE_IDENTITY_DIR XBAR_VIBE_VERSION VIBE_EDGE_SHARED_SECRET VIBE_EDGE_ORIGIN_TOKEN; do
     [ -n "$(read_value "$key")" ] || {
       echo "缺少必填配置：$key" >&2
       exit 1
@@ -55,6 +55,10 @@ validate() {
   case "$(read_value VIBE_CONTROL_URL)" in
     https://*/api/vibe-coding/gateway/internal) ;;
     *) echo "VIBE_CONTROL_URL 必须是 Core 的 HTTPS 内部授权接口" >&2; exit 1 ;;
+  esac
+  case "$(read_value VIBE_CONTROL_URL)" in
+    https://"$(read_value VIBE_CONTROL_HOST)"/*) ;;
+    *) echo "VIBE_CONTROL_HOST 必须与 VIBE_CONTROL_URL 中的域名一致" >&2; exit 1 ;;
   esac
   case "$(read_value VIBE_UPSTREAM_URL)" in http://*|https://*) ;; *) echo "VIBE_UPSTREAM_URL 必须是 HTTP(S) 地址" >&2; exit 1 ;; esac
   for key in VIBE_EDGE_SHARED_SECRET VIBE_EDGE_ORIGIN_TOKEN; do
@@ -102,6 +106,12 @@ case "$action" in
     compose up -d --wait --remove-orphans
     compose ps
     ;;
+  node-info)
+    require_docker
+    validate
+    compose run --rm identity-init
+    compose run --rm --no-deps edge-a node-info
+    ;;
   update)
     require_docker
     validate
@@ -127,7 +137,7 @@ case "$action" in
     compose down
     ;;
   *)
-    echo "用法：$0 {init|config|up|update|status|logs|down}" >&2
+    echo "用法：$0 {init|config|node-info|up|update|status|logs|down}" >&2
     exit 64
     ;;
 esac
