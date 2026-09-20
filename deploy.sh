@@ -21,6 +21,27 @@ read_value() {
   sed -n "s/^$1=//p" "$ENV_FILE" | tail -n 1
 }
 
+template_value() {
+  sed -n "s/^$1=//p" "$ROOT_DIR/.env.example" | tail -n 1
+}
+
+sync_release() {
+  image=$(template_value XBAR_VIBE_IMAGE)
+  version=$(template_value XBAR_VIBE_VERSION)
+  [ -n "$image" ] && [ -n "$version" ] || {
+    echo "部署仓库缺少 Vibe 发布版本" >&2
+    exit 1
+  }
+  if [ "$(read_value XBAR_VIBE_IMAGE)" != "$image" ]; then
+    replace_value XBAR_VIBE_IMAGE "$image"
+    echo "已同步 Vibe 镜像版本：$image"
+  fi
+  if [ "$(read_value XBAR_VIBE_VERSION)" != "$version" ]; then
+    replace_value XBAR_VIBE_VERSION "$version"
+    echo "已同步 Vibe 运行版本：$version"
+  fi
+}
+
 initialize() {
   if [ -f "$ENV_FILE" ]; then
     echo "环境文件已存在，未覆盖：$ENV_FILE"
@@ -114,6 +135,7 @@ case "$action" in
     ;;
   update)
     require_docker
+    sync_release
     validate
     compose pull edge-a edge-b
     compose up -d --no-deps --wait edge-a
