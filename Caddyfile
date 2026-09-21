@@ -21,6 +21,8 @@
 			fail_duration 30s
 			max_fails 2
 			header_up X-Xbar-Vibe-Origin {$VIBE_EDGE_ORIGIN_TOKEN}
+			header_up X-Xbar-Vibe-Request-Nonce {http.request.uuid}
+			header_up X-Xbar-Vibe-Request-Time {time.now.unix}
 			flush_interval -1
 		}
 	}
@@ -29,4 +31,3 @@
 		respond "Not Found" 404
 	}
 }
-
